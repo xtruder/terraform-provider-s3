@@ -4,8 +4,9 @@ import (
 	"errors"
 	"log"
 
-	"github.com/hashicorp/terraform/helper/schema"
 	"fmt"
+	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/minio/minio-go"
 )
 
 func resourceS3File() *schema.Resource {
@@ -55,7 +56,9 @@ func resourceS3FileCreate(d *schema.ResourceData, meta interface{}) error {
 			name, file_path, bucket)
 	}
 
-	_, err := s3_client.FPutObject(bucket, name, file_path, content_type)
+	_, err := s3_client.FPutObject(bucket, name, file_path, minio.PutObjectOptions{
+		ContentType: content_type,
+	})
 	if err != nil {
 		log.Printf("[FATAL] Unable to create object [%s]. Error: %v", name, err)
 		return errors.New(fmt.Sprintf("Unable to create object [%s].  Error: %v", name, err))
@@ -80,7 +83,7 @@ func resourceS3FileRead(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[DEBUG] Reading file [%s] from bucket [%s] into file [%s]", name, bucket, file_path)
 	}
 
-	err := s3_client.FGetObject(bucket, name, file_path)
+	err := s3_client.FGetObject(bucket, name, file_path, minio.GetObjectOptions{})
 	if err != nil {
 		log.Printf("[FATAL]  Unable to read file [%s] from bucket [%s] into file [%s].  Error: %v", name, bucket, file_path, err)
 		return errors.New(fmt.Sprintf("Unable to read file [%s].  Error: %v", name, err))
